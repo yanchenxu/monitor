@@ -1,10 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/bocheninc/base/log"
+	"github.com/bocheninc/monitor/server"
+	yaml "gopkg.in/yaml.v2"
 )
 
 func main() {
@@ -12,5 +14,19 @@ func main() {
 		log.Infoln("must ./monitor monitor.yaml")
 	}
 
-	fmt.Println(os.Args)
+	data, err := ioutil.ReadFile(os.Args[1])
+	if err != nil {
+		log.Errorln("read agent config file error:", err)
+		return
+	}
+
+	config := &server.Config{}
+	err = yaml.Unmarshal(data, config)
+	if err != nil {
+		log.Errorln("unmarshal error, error:", err)
+		return
+	}
+
+	s := server.NewServer(config)
+	s.Start()
 }
