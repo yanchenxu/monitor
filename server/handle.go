@@ -21,7 +21,7 @@ func GetServerInfo() (*ServerInfo, error) {
 	return &ServerInfo{
 		CPU:  int(c[0]),
 		Disk: int(d.UsedPercent),
-		IP:   GetLocalIP(),
+		IP:   cfg.IP,
 	}, nil
 }
 
