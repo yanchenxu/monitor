@@ -8,7 +8,7 @@ import (
 	"github.com/shirou/gopsutil/net"
 )
 
-func GetServerInfo() (*ServerInfo, error) {
+func (s *Server) getServerInfo() (*ServerInfo, error) {
 	c, err := cpu.Percent(2*time.Second, false)
 	if err != nil {
 		return nil, err
@@ -25,35 +25,42 @@ func GetServerInfo() (*ServerInfo, error) {
 	}, nil
 }
 
-func GetServerStatus() (*ServerStatus, error) {
-	c, err := cpu.Percent(2*time.Second, false)
+func (s *Server) getServerStatus() error {
+	c, err := cpu.Percent(1*time.Second, false)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	d, err := disk.Usage("/")
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	ds, err := disk.IOCounters("/dev/sda1")
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	n, err := net.IOCounters(false)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &ServerStatus{
-		CPUUse:     int(c[0]),
-		DiskUse:    int(d.UsedPercent),
-		ReadBytes:  ds["sda1"].ReadBytes,
-		ReadCount:  ds["sda1"].ReadCount,
-		RecvBytes:  n[0].BytesRecv,
-		SentBytes:  n[0].BytesSent,
-		WriteBytes: ds["sda1"].WriteBytes,
-		WriteCount: ds["sda1"].WriteCount,
-	}, nil
+	f := func(arr []uint64, arg uint64) []uint64 {
+		arr = append(arr, arg)
+		if len(arr) > 10 {
+			return arr[1:]
+		}
+		return arr
+	}
+
+	s.serverStatus.CPUUse = f(s.serverStatus.CPUUse, uint64(c[0]))
+	s.serverStatus.DiskUse = uint64(d.UsedPercent)
+	s.serverStatus.ReadBytes = f(s.serverStatus.ReadBytes, ds["sda1"].ReadBytes)
+	s.serverStatus.ReadCount = f(s.serverStatus.ReadCount, ds["sda1"].ReadCount)
+	s.serverStatus.RecvBytes = f(s.serverStatus.RecvBytes, n[0].BytesRecv)
+	s.serverStatus.SentBytes = f(s.serverStatus.SentBytes, n[0].BytesSent)
+	s.serverStatus.WriteBytes = f(s.serverStatus.WriteBytes, ds["sda1"].WriteBytes)
+	s.serverStatus.WriteCount = f(s.serverStatus.WriteCount, ds["sda1"].WriteCount)
+	return nil
 }

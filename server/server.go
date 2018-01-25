@@ -16,9 +16,10 @@ const (
 )
 
 type Server struct {
-	peeID  string
-	peer   *peer.Peer
-	ticker *time.Ticker
+	peeID        string
+	peer         *peer.Peer
+	ticker       *time.Ticker
+	serverStatus *ServerStatus
 }
 
 func NewServer(config *Config) *Server {
@@ -29,26 +30,32 @@ func NewServer(config *Config) *Server {
 	s.peeID = fmt.Sprintf("%s:%s", monitorPrefix, cfg.ID)
 	s.peer = NewMsgnet(s.peeID, cfg.MsgnetURL, s.msghandle, "")
 	s.ticker = time.NewTicker(config.ReportTimeDur)
+	s.serverStatus = &ServerStatus{}
 	return s
 }
 
 func (s *Server) Start() {
 	log.Infoln("server start ...")
+	go func() {
+		for {
+			time.Sleep(1 * time.Second)
+			if err := s.getServerStatus(); err != nil {
+				log.Errorln("GetServerStatus func err: ", err)
+			}
+		}
+	}()
+
 	for {
 		select {
 		case <-s.ticker.C:
 			m := make(map[string]interface{})
-			serverInfo, err := GetServerInfo()
+			serverInfo, err := s.getServerInfo()
 			if err != nil {
 				log.Errorln("GetServerInfo func err: ", err)
 			}
-			serverStatus, err := GetServerStatus()
-			if err != nil {
-				log.Errorln("GetServerStatus func err: ", err)
-			}
 
 			m["localServer"] = serverInfo
-			m["serverStatus"] = serverStatus
+			m["serverStatus"] = s.serverStatus
 
 			payload, err := json.Marshal(m)
 			if err != nil {
