@@ -11,4 +11,5 @@ type Config struct {
 	IP            string        `yaml:"ip"`
 	MsgnetURL     []string      `yaml:"msgneturl"`
 	ReportTimeDur time.Duration `yaml:"reporttimedur"`
+	Disk          string        `yaml:"disk"`
 }

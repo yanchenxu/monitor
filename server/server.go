@@ -20,6 +20,7 @@ type Server struct {
 	peer         *peer.Peer
 	ticker       *time.Ticker
 	serverStatus *ServerStatus
+	tmpStatus    *tmpStatus
 }
 
 func NewServer(config *Config) *Server {

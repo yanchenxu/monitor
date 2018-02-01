@@ -1,4 +1,5 @@
-id: "0001"
-ip: "127.0.0.1"
-msgneturl: ["127.0.0.1:9999"]
+id: "mon_1"
+ip: "192.168.157.153"
+msgneturl: ["192.168.157.153:9999"]
 reporttimedur: 1s
+disk: "/dev/dm-0"
